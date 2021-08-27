@@ -1,0 +1,142 @@
+---
+title: "Grandmother's Clothes"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: bootstrap
+    orientation: columns
+    vertical_layout: fill
+    social: [ "twitter"]
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(colourpicker)
+library(knitr)
+
+```
+
+
+
+My [recreation](https://twitter.com/kelsey_chalmers/status/1430875667793682432) of the ["Grandmother's Clothes 1"](https://explore.dangrove.org/objects/1185) painting by Chung Shun-Wen, in base R
+=====================================     
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+colVec1 <- c(232,224,220)/255
+co01 <- rgb(colVec1[1],colVec1[2],colVec1[3])
+
+colVec2 <- c(136,77,75)/255
+co02 <- rgb(colVec2[1],colVec2[2],colVec2[3])
+
+colVec3 <- c(183,158,150)/255
+co03 <- rgb(colVec3[1],colVec3[2],colVec3[3])
+
+n0 <- 30
+b0 <- 2.7
+
+colourInput("co1", "Select colour 1", value = co01)
+colourInput("co2", "Select colour 2", value = co02)
+colourInput("co3", "Select colour 3", value = co03)
+
+tags$hr()
+actionButton("random_col", "Random Colours")
+
+tags$hr()
+actionButton("reset_col", "Reset Colours")
+
+tags$hr()
+sliderInput("n", "Period of Waves",
+    min = 6, max = 100, value = n0
+  )
+
+tags$hr()
+sliderInput("b", "Distance of Waves",
+    min = 0, max = 10, value = b0,round = -1,step = 0.1,
+  )
+
+tags$hr()
+actionButton("reset_param", "Reset Parameters")
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+
+### Recreaton, base R
+    
+```{r}
+
+
+observeEvent(input$reset_param, {
+  updateSliderInput(session, "n", label = "Seriously?!", value = n0)
+  updateSliderInput(session, "b", label = "Distance of Waves", value = b0)
+})
+
+observeEvent(input$reset_col, {
+  updateColourInput(session, "co1", label = "Select colour 1", value = co01)
+  updateColourInput(session, "co2", label = "Select colour 2", value = co02)
+  updateColourInput(session, "co3", label = "Select colour 3", value = co03)
+})
+
+observeEvent(input$random_col, {
+  c1 <- runif(3)
+  c2 <- runif(3)
+  c3 <- runif(3)
+  updateColourInput(session, "co1", label = "Select colour 1", value = rgb(c1[1],c1[2],c1[3]))
+  updateColourInput(session, "co2", label = "Select colour 2", value = rgb(c2[1],c2[2],c2[3]))
+  updateColourInput(session, "co3", label = "Select colour 3", value = rgb(c3[1],c3[2],c3[3]))
+
+})
+
+renderPlot({
+  
+x <- seq(0,pi*input$n,length.out = input$n*10)
+y <- sin(x)
+
+  plot(y, x, xlab="",ylab="", type="l",xaxt='n',yaxt='n',
+     ylim=c(10,max(x)-10),
+     xlim=c(10,70))
+  polygon(c(0 ,0,100,100),c(0, max(x),max(x),0),  col = input$co1, border = input$co1,lwd = 0.05 )      
+  
+  xs <- 3/2*pi+ 2*pi*(0:(input$n-1))
+  xr <- 1/2*pi+ 2*pi*(0:(input$n-1))
+  for (j in 0:20){
+    y1 <- y + 2*j*input$b
+    y2 <- y1 + input$b
+    ys <- 0.5*input$b+rep(0,input$n)+1*input$b*j*2
+    yr <- 1.5*input$b+rep(0,input$n)+1*input$b*j*2
+    
+    polygon(c(y1 ,y2), c(x, rev(x)), col = input$co2, border = input$co2,lwd = 0.05 )
+
+
+    points( ys,xs, pch = 18,col=input$co1, cex=2.4)
+    points( ys,xs, pch = 19,col=input$co2, cex=0.9)
+    points( ys,xs, pch = 18,col=input$co1, cex=.3)
+
+    points( yr,xr, pch = 18,col=input$co2, cex=2.4)
+    points( yr,xr, pch = 19,col=input$co3, cex=0.9)
+    points( yr,xr, pch = 18,col=input$co2, cex=.3)
+}
+
+
+    
+  })
+
+```
+
+<!-- Painting -->
+<!-- =====================================      -->
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+### Painting
+
+```{r, fig.width=10, fig.height=10} 
+
+include_graphics("https://explore.dangrove.org/images/large/chung%20shun-wen/website/2013.248_chung%20shun-wen_grandmother's%20clothes%201_2008.jpg", dpi=25)
+```
