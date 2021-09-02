@@ -1,0 +1,133 @@
+---
+title: "#RecreationThursday"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: bootstrap
+    orientation: columns
+    vertical_layout: fill
+    # social: ["github" ,"twitter"]
+    navbar:
+        - { icon: "fa-github", href: "https://github.com/amarashi/RecreationThursday", align: right}
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(colourpicker)
+library(knitr)
+library(plotrix)
+
+```
+
+
+
+My [recreation](https://twitter.com/Miles_Ott/status/1425832775102386177) of the [Bridget Riley's Hesitate ](https://www.tate.org.uk/art/artworks/riley-hesitate-t04132), R
+=====================================     
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+co01 <- "#333333"
+
+co02 <- "#F2F2F2"
+
+
+d0 <- pi/8
+
+colourInput("co1", "Select colour 1", value = co01)
+colourInput("co2", "Select colour 2", value = co02)
+
+tags$hr()
+actionButton("random_col", "Random Colours")
+
+tags$hr()
+actionButton("reset_col", "Reset Colours")
+
+tags$hr()
+sliderInput("delta", "Shift the colours",
+    min = -pi/2, max = pi/2, value = d0
+  )
+
+tags$hr()
+
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+
+### Recreation, R
+    
+```{r}
+
+
+observeEvent(input$reset_col, {
+  updateColourInput(session, "co1", label = "Select colour 1", value = co01)
+  updateColourInput(session, "co2", label = "Select colour 2", value = co02)
+})
+
+observeEvent(input$random_col, {
+  c1 <- runif(3)
+  c2 <- runif(3)
+  updateColourInput(session, "co1", label = "Select colour 1", value = rgb(c1[1],c1[2],c1[3]))
+  updateColourInput(session, "co2", label = "Select colour 2", value = rgb(c2[1],c2[2],c2[3]))
+})
+
+renderPlot({
+
+n <- 14
+m <- n+n/2
+d <- 0.1
+scale <- 1.1
+a <- scale+d
+x0 <- seq(0,pi,length.out = 2*n)
+b0 <- c(rep(1,n),abs(cos(x0)))+d
+b1 <- b0[c(TRUE,FALSE)]
+b2 <- b0[c(FALSE,TRUE)]
+
+v <- 5*c(1:n)
+x <- matrix(v, nrow=m, ncol=length(v), byrow=TRUE)
+w1 <- 5*cumsum(b1)
+y1 <- t(matrix(w1, nrow=n, ncol=length(w1), byrow=TRUE))
+
+
+
+colfunc <- colorRampPalette(c(input$co1, input$co2))
+# grs <- gray.colors(100, start = 0.2, end = 0.95)
+grs <- colfunc(100)
+
+ind <- 100*round(1-abs(cos(1*seq(0,3*pi/2,length.out = n+m+1)-input$delta)),2)
+
+cols1 <- grs[ind]
+
+colsInd <- matrix(NA,m,n)
+for (i in 1:m){
+  j <-  n-i+1
+  colsInd[i,] <- cols1[(i+n-1):i]
+}
+
+plot(c(0,max(x)),c(0,max(y1)),
+     xlab="",ylab="", type="n",xaxt='n',yaxt='n',axes=F,
+     asp=1)
+draw.ellipse(x,y1,a,b1*scale, col = colsInd, lty= 0)
+
+w2 <- 5*cumsum(b2)
+y2 <- t(matrix(w2, nrow=n, ncol=length(w2), byrow=TRUE))
+draw.ellipse(x+2.5, y2+(2.5), a, b2*scale, col = colsInd, lty= 0)
+
+  })
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+### Hesitate
+
+```{r, fig.width=10, fig.height=10} 
+
+include_graphics("https://www.tate.org.uk/art/images/work/T/T04/T04132_10.jpg", dpi=25)
+```
