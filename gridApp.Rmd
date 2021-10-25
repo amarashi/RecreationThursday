@@ -1,0 +1,146 @@
+---
+title: "Grid"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: bootstrap
+    orientation: columns
+    vertical_layout: fill
+    navbar:
+        - { icon: "fa-github", href: "https://github.com/amarashi/RecreationThursday", align: right}
+    social: [ "twitter"]
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library("RColorBrewer")
+
+
+```
+
+
+
+My [recreation](https://twitter.com/sharlagelfand/status/1448644162992148484) of the Will Creech's ["Grid"](https://www.instagram.com/p/CQ82UdMFSj_/) in R.
+=====================================     
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+nw0 <- 3
+tags$hr()
+sliderInput("nwi", "Num of the windows in each row:",
+    min = 1, max = 5, value = 3
+  )
+
+tags$hr()
+radioButtons("shape", "Shape of the windows:",
+               c("Square" = "sqr",
+                 "Circle" = "circle"),
+             selected = "sqr")
+
+tags$hr()
+radioButtons("quality", "Quality (num of dots)",
+               c("low (ugly but fast)" = 100000,
+                 "medium" = 1000000,
+                 "high (takes ages!)" = 10000000),
+             selected = 100000)
+
+tags$hr()
+actionButton("reset_param", "Reset Parameters")
+
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+
+### Recreation, R
+    
+```{r}
+
+
+observeEvent(input$reset_param, {
+  updateSliderInput(session, "nwi", label = "reset", value = nw0)
+  updateRadioButtons(session,"shape", selected = "sqr")
+    updateRadioButtons(session,"quality", selected = 100000)
+
+})
+
+
+
+x <- 1
+
+
+renderPlotly({
+  N <-  input$quality
+  nw <- input$nwi
+  nb <- nw+1
+  
+  db <- x/(nb+3*nw)
+  dw <- 3*db
+  
+  xu <- runif(n = N,min = 0,max = x)
+  yu <- runif(n = N,min = 0,max = x)
+  zu <- -runif(n = N,min = 0,max = x)
+  # zu <- rexp(N, rate = 1)
+  
+  df <- data_frame(x = xu,y = yu,z = zu)
+  
+  
+  
+  for (i in 1:nw){
+    for (j in 1:nw){
+      if (input$shape == "circle"){
+        xc <- i*db+((i-1)*dw) + dw/2
+        yc <- j*db+((j-1)*dw)+dw/2
+        df <- df %>% filter(!((x-xc)^2 + (y-yc)^2 < (dw/2)^2 ))
+      }else{
+      df <- df %>%
+        filter(!(x > (i*db+(i-1)*dw)  & x < (i*db+i*dw) &
+                 y >   (j*db+(j-1)*dw)  & y < (j*db+j*dw))
+               )
+      }
+        
+      
+    }
+  }
+  
+  
+  scene <- list(aspectmode = "manual", aspectratio = list(x=1, y=1, z=0.7),
+                camera = list(eye = list(x = 0,y = 0,z =-2 )),
+                xaxis = list(title = "", zeroline = FALSE,   
+                             showline = FALSE,  showticklabels = FALSE,  showgrid = FALSE),
+                yaxis = list(title = "", zeroline = FALSE,   
+                             showline = FALSE,  showticklabels = FALSE,  showgrid = FALSE), 
+                zaxis = list(title = "", zeroline = FALSE, 
+                             showline = FALSE,  showticklabels = FALSE,  showgrid = FALSE))
+  
+
+  fig <- plot_ly(df, type="scatter3d", mode = "markers",
+               x = ~x, y = ~y, z = ~z, 
+               marker = list(size = 1., color = ~z, colorscale='Blues',
+                             reversescale =F, showscale = FALSE))
+ 
+  fig %>% 
+  layout(scene = scene)
+   })
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+### The art
+
+```{r, fig.width=10, fig.height=10} 
+
+include_graphics("https://pbs.twimg.com/media/FBqdyH8XEAMXquD?format=jpg&name=900x900", dpi=25)
+```
