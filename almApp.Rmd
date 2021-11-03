@@ -1,0 +1,157 @@
+
+---
+title: "Alma"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: bootstrap
+    orientation: columns
+    vertical_layout: fill
+    navbar:
+        - { icon: "fa-github", href: "https://github.com/amarashi/RecreationThursday", align: right}
+    social: [ "twitter"]
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(knitr)
+library(dplyr)
+
+
+```
+
+
+
+My [recreation](https://twitter.com/ijeamaka_a/status/1453753425393381377) of [Alma Woodsey Thomas's, Iris, Tulips, Jonquils, and Crocuses](https://nmwa.org/blog/artist-spotlight/artist-spotlight-alma-thomas/) in R.
+=====================================     
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+tags$hr()
+actionButton("goButton", "I am feeling artistic!")
+
+
+tags$hr()
+
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+
+### Recreation, R
+    
+```{r}
+
+cols <- c("#E6C74A","#013972","#3E8ABE","#3D406D",
+          "#55827B","#C8693D","#A52114","#AABE8D",
+          "#CFBABF","#D6D594", "#004080","#004A95",
+          "#AA311E","#013F7C")
+
+Brick <- function(){
+ 
+  n1 <- sample(2:10, 1)
+  p1x <- sort(runif(n = n1, min = 0.1, max = 0.9))
+  p1y <- (runif(n = n1, min = 0.05, max = 0.2))
+  
+  n1 <- sample(2:10, 1)
+  p2x <- (runif(n = n1,min = 0.8, max = 0.9))
+  p2y <- sort(runif(n = n1, min = 0.05, max = 1.95))
+
+  n1 <- sample(2:10, 1)
+  p3x <- sort(runif(n = n1,min = 0.1,max = 0.9),decreasing = TRUE)
+  p3y <- (runif(n = n1, min = 1.8, max = 1.95))
+  
+  n1 <- sample(2:10, 1)
+  p4x <- (runif(n = n1, min = 0.1, max = 0.2))
+  p4y <- sort(runif(n = n1,min = 0.05,max = 1.95),decreasing = TRUE)
+  
+  
+  x<-c(p1x,p2x,p3x,p4x)
+  y<-c(p1y,p2y,p3y,p4y)
+  
+  return(list(px = x, py = y))
+}
+
+
+
+I <- 50
+J <- 30
+
+
+dto <- eventReactive(input$goButton, {
+  dt <- list()
+  up <- FALSE
+  down <- FALSE
+  colSamp <- sample(cols,1)
+  for (i in 1:I){
+    colSamp <- sample(c(colSamp,sample(cols,1)), prob = c(0.1,0.9),1)
+    
+    if (up){
+      up <-  sample(x = c(TRUE,FALSE), prob = c(0.7,0.3),size = 1)
+      upNum <- upNum + sample(c(-1,1),1)
+      upColSamp <- sample(c(upColSamp,sample(cols,1)), prob = c(0.5,0.5),1)
+    }else{
+      up <-  sample(x = c(TRUE,FALSE), prob = c(0.1,0.9),size = 1)
+      upNum <- sample(x = c(0:floor(J/2)), size = 1, replace = FALSE)
+      upColSamp <- sample(cols,1)
+    }
+    
+    if (down){
+      down <-  sample(x = c(TRUE,FALSE),prob = c(0.7,0.3),size = 1)
+      downNum <- downNum + sample(c(-1,1),1)
+      downColSamp <- sample(c(downColSamp,sample(cols,1)), prob = c(0.5,0.5),1)
+    }else{
+      down <-  sample(x = c(TRUE,FALSE), prob = c(0.2,0.8),size = 1)
+      downNum <- sample(x = c(floor(J/2):J), size = 1, replace = FALSE)
+      downColSamp <- sample(cols,1)
+      
+    }
+    
+  
+    epsilon <- runif(1,min = -1, max = 1)
+    for (j in 1:J){
+      m <- (i-1)*J + j
+      out <- Map("+", Brick(), list(i,epsilon+2*j))
+      if (up & j<upNum){
+        out$col <- upColSamp
+      }else if(down & j>downNum){
+        out$col <- downColSamp
+        }else{
+          out$col <- colSamp
+          }
+      dt[m] <- list(out)
+  }
+}
+dt
+
+})
+
+
+renderPlot({
+  #create empty plot
+plot(c(0,I),c(0,2*J),xlab="",ylab="", type="n",xaxt='n',yaxt='n',axes=F
+     ,asp = 1, xlim=c(0,I),ylim=c(5,2*J-1))
+
+
+#add polygons
+lapply(dto(),function(x){polygon(x$px,x$py,col=x$col,border=x$col)})
+
+   })
+
+```
+
+
+Column{data-width=350}
+-----------------------------------------------------------------------
+### The art
+
+```{r, fig.width=10, fig.height=10} 
+
+include_graphics("https://nmwa.org/wp-content/uploads/2020/01/1986.323.jpg", dpi=25)
+```
